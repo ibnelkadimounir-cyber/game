@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+
+<title>لــــــــعــــــبـــــــة الــــتــــقـــــــــاط الــــــــــــــتــــفــــاح </title>
+<style>
+body{margin:0;background:linear-gradient(#0a3d62,#3c8ce7);font-family:Arial;text-align:center;color:#fff;overflow:hidden; touch-action:none;
+user-select:none;}
+canvas{width:100vw;height:80vh;max-width:420px;max-height:560px;display:block;margin:auto}
+.controls{display:flex;justify-content:center;gap:20px;margin-top:5px}
+.btn{background:#1e90ff;border:none;color:#fff;padding:12px 20px;border-radius:12px;font-size:18px}
+</style>
+</head>
+<body>
+
+<h3>🍎 لــــــــعــــــبـــــــة الــــتــــقـــــــــاط الــــــــــــــتــــفــــاح</h3>
+<canvas id="game" width="420" height="560"></canvas>
+
+<div class="controls">
+<button class="btn" id="left">⬅️</button>
+<button class="btn" id="right">➡️</button>
+<button class="btn" onclick="r()">🔁</button>
+<button class="btn" onclick="f()">🔲</button>
+</div>
+
+<script>
+(()=>{let c=document.getElementById("game"),x=c.getContext("2d"),bw=420,bh=560,s=1,
+sc=0,bs=localStorage.getItem("bestScore")||0,l=1,g=!1,
+p={x:170,y:460,w:90,h:90,f:0,st:0},
+pi=new Image(),ai=new Image();
+pi.src="https://cdn-icons-png.flaticon.com/512/1995/1995574.png";
+ai.src="https://cdn-icons-png.flaticon.com/512/415/415682.png";
+
+let m=new Audio("https://cdn.pixabay.com/download/audio/2022/10/25/audio_946f3b7f27.mp3?filename=arcade-music-loop-132bpm-14510.mp3");
+m.loop=!0;m.volume=.4;m.play().catch(()=>{});
+
+let cl=[...Array(5)].map(()=>({x:Math.random()*420,y:Math.random()*200,sp:.3+Math.random()}));
+let ap=[],pt=[];
+
+function ca(){ap.push({x:Math.random()*380,y:-20,vy:0,gr:.08,ro:0,rs:(Math.random()-.5)*.1})}
+ca();
+
+let k={},L=!1,R=!1;
+document.addEventListener("keydown",e=>k[e.key]=!0);
+document.addEventListener("keyup",e=>k[e.key]=!1);
+const leftBtn=document.getElementById("left");
+const rightBtn=document.getElementById("right");
+
+["touchstart","mousedown"].forEach(e=>{
+leftBtn.addEventListener(e,()=>L=true);
+rightBtn.addEventListener(e,()=>R=true);
+});
+
+["touchend","touchcancel","mouseup"].forEach(e=>{
+leftBtn.addEventListener(e,()=>L=false);
+rightBtn.addEventListener(e,()=>R=false);
+});
+
+function rs(){
+let ratio=bw/bh;
+let w=window.innerWidth;
+let h=window.innerHeight*0.75;
+
+if(w/h>ratio){w=h*ratio}else{h=w/ratio}
+
+c.style.width=w+"px";
+c.style.height=h+"px";
+
+c.width=bw;
+c.height=bh;
+
+s=w/bw;
+}
+
+function cp(a,b){for(let i=0;i<12;i++)pt.push({x:a,y:b,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,lf:30})}
+
+function u(){
+if(g)return;
+if(k["ArrowRight"]||R){p.x+=3;p.st+=.3}
+if(k["ArrowLeft"]||L){p.x-=3;p.st+=.3}
+p.f+=.1;l=1;
+
+cl.forEach(o=>{o.x+=o.sp;if(o.x>450)o.x=-60});
+
+ap.forEach(a=>{
+a.vy+=a.gr+l*.01;a.y+=a.vy;a.ro+=a.rs;
+if(a.y+20>=p.y+20&&a.x>=p.x&&a.x<=p.x+p.w){
+sc++;cp(a.x,a.y);
+if(sc>bs){bs=sc;localStorage.setItem("bestScore",bs)}
+a.y=-20;a.x=Math.random()*380;a.vy=0}
+if(a.y>c.height)g=!0
+});
+
+if(ap.length<l)ca();
+
+pt.forEach(o=>{o.x+=o.vx;o.y+=o.vy;o.lf--});
+pt=pt.filter(o=>o.lf>0)
+}
+
+function d(){
+x.clearRect(0,0,c.width,c.height);
+x.fillStyle="rgba(255,255,255,0.7)";
+cl.forEach(o=>{x.beginPath();x.arc(o.x,o.y,20,0,6.28);x.arc(o.x+20,o.y+5,18,0,6.28);x.arc(o.x-20,o.y+5,18,0,6.28);x.fill()});
+
+x.save();
+x.translate(p.x+p.w/2,p.y+p.h/2);
+x.rotate(Math.sin(p.st)*.05);
+x.drawImage(pi,-p.w/2,-p.h/2,p.w,p.h);
+x.restore();
+
+ap.forEach(a=>{
+x.save();
+x.translate(a.x+18,a.y+18);
+x.rotate(a.ro);
+x.drawImage(ai,-18,-18,36,36);
+x.restore()
+});
+
+pt.forEach(o=>{x.fillStyle="yellow";x.fillRect(o.x,o.y,3,3)});
+
+x.fillStyle="#fff";
+x.font="18px Arial";
+x.fillText("النتيجة:"+sc,10,20);
+x.fillText("أفضل نتيجة :"+bs,150,20);
+x.fillText("المستوى :"+l,320,20);
+
+if(g){x.font="28px Arial";x.fillText("",130,260)}
+}
+
+let last=0;
+function lp(t){
+if(t-last>16){ // تقريباً 60FPS
+   u();
+   d();
+   last=t;
+}
+requestAnimationFrame(lp);
+}
+lp();
+
+window.r=function(){sc=0;l=1;ap=[];pt=[];g=!1;ca()};
+window.f=function(){document.fullscreenElement?document.exitFullscreen():document.body.requestFullscreen()};
+})();
+</script>
+<footer style="color:white; text-align:center; padding:12px; font-size:16px;"> لعبة التقاط التفاح - مجموعة مدارس تاغلاست ---- وحدة حضرية --  انجاز الأستاذ منير ابن القاضي الموسم 2025-2026 
+</footer>
+
+</body>
+</html>
